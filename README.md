@@ -19,7 +19,7 @@ as they also encapsulate meaningful information about a program. The best tool
 right now is `import()` but it forces all code relying on a lazily loaded module to become async,
 without necessarily reflecting the intention of the programmer.
 
-In some cases, a programmer way want to sacrifice some performance to guarentee that the modules
+In some cases, a programmer may want to sacrifice some performance to guarantee that the modules
 they are working with are sync. This is where deferring module evaluation comes in. Since a module
 can be deferred, some optimizations such as a preparse might be applied to get further startup
 speedups.
@@ -37,17 +37,17 @@ client side, this was largely addressed by the introduction of Dynamic Import us
 splitting. However, it also introduces a few issues. The main one is that it forces a codebase to be
 async. This has two implications: 1) there is a high refactoring cost, and 2) there may be races.
 
-This is not to say that dynamic import should be changed. It is, on it's own, a very useful tool and already contributing significantly to production codebases. The two techniques -- code splitting and deferring evaluation, are complimentary. Specifically, Dynamic import coupled with code splitting can reduce startup I/O cost whereas lazy import can reduce initialization cost. Different applications may favor one or the other.
+This is not to say that dynamic import should be changed. It is, on its own, a very useful tool and already contributing significantly to production codebases. The two techniques -- code splitting and deferring evaluation, are complementary. Specifically, Dynamic import coupled with code splitting can reduce startup I/O cost whereas lazy import can reduce initialization cost. Different applications may favor one or the other.
 
 ## Description
 
-Deferring the evaluation of a module may be desirable when the intention is not to run a module upon
-loading. This can help startup performance, and may be especially useful when the goal is not to
-load something from the network but to use local resources.
+Deferring the evaluation of a module may be desirable when the intention is to not run a module upon
+loading. This can help startup performance, and may be especially useful when the goal is to not
+load something from the network but instead use local resources.
 
 ## Proposed API
 
-The api can take a couple of forms, here are some suggestions:
+The API can take a couple of forms, here are some suggestions:
 
 Using import attributes (using `lazyInit` here to illustrate, but it could also be something like `deferEval` or similar:
 
@@ -57,7 +57,7 @@ import defaultName from "y" with { lazyInit: true }
 import * as ns from "y" with { lazyInit: true }
 ```
 
-or using a custom keyword, in this case using `lazy import` as a stand in:
+or using a custom keyword, in this case using `lazy import` as a stand-in:
 
 ```js
 lazy import {x} from "y";
@@ -82,9 +82,9 @@ So, the question is, at which point do we start deferring work? Modules can be s
 
 Starting with **1) Before Load**: At present, we already have a technique for deferring at load, dynamic import. Dynamic
 import must be asynchronous, otherwise we would break run-to-completion semantics. Dynamic import is
-already a powerful tool in use on many applications.
+already a powerful tool in use in many applications.
 
-If we consider **2) Before Parse**, we see that it is ill-advised to laziness is at this point, due to the note at 2.i. Without parsing, we will be unable to have a complete module graph. We want the module graph to be present and complete, so that other work can also be
+If we consider **2) Before Parse**, we see that laziness is ill-advised at this point, due to the note at 2.i. Without parsing, we will be unable to have a complete module graph. We want the module graph to be present and complete, so that other work can also be
 done. So, **we do not want to defer parsing**. However, many engines may implement an optimization
 to only partially parse the module, and find early errors and imports.
 
@@ -93,16 +93,16 @@ However, if those are important, a developer would be able to fall back on dynam
 in sync code for more performance. Secondly, we would change the evaluation order. Presently, we
 have an invariant that all child modules of a parent module will complete evaluation before their
 parent module completes evaluation. What lazy-eval would introduce is a new concept. We would have a
-subgraph that does not evaluate with the parent, but instead waits untill it is called.
+subgraph that does not evaluate with the parent, but instead waits until it is called.
 
 ### Impact on execution order
 
 |                                | Static Import        | Dynamic Import               | "Lazy" Import  |
 |--------------------------------|----------------------|------------------------------|----------------|
-| Top level exectution of module | Load, Parse, Execute |                              |  Load, Parse   |
+| Top level execution of module  | Load, Parse, Execute |                              |  Load, Parse   |
 | First use                      |                      | Load, Parse, Execute         |  Execute       |
 
-The proposal in it's simplest form will pause at point 3, and for the present moment this is the
+The proposal in its simplest form will pause at point 3, and for the present moment this is the
 approach taken. However, we can't be certain that we will get desirable performance characteristics
 from this alone, or that it will be as useful for client side applications as it might be for
 server-side applications (more on that in the next section).
@@ -156,7 +156,7 @@ function Foo() {
 }
 ```
 
-## Code Splitting: a complimentary tool.
+## Code Splitting: a complementary tool.
 
 At present, the tool available to developers is dynamic import, often used as part of a technique
 called code splitting. This technique works really well in a number
@@ -228,7 +228,7 @@ initialization, it makes less sense.
 To use Dynamic import in the case where lazy-eval import would be a more appropriate solution, we come
 to the following issues:
 
-1) It introduces a large refactoring task, including knockon effects in potentially distant code such
+1) It introduces a large refactoring task, including knock-on effects in potentially distant code such
 as `eventuallyCalled` in this example.
 2) It introduces information to the programmer that async work is being done, when the only goal here is to *hint* that modules can
 be deferred, not change the meaning of the code to be asynchronous rather than synchronous.
@@ -255,13 +255,13 @@ This is resource intensive. It may also result in some unexpected behavior. As d
 documentation for suspense, this has its best application in cases where you really want things to be sync,
 but there is a performance issue. A situation like this may very well benefit from a different technique than dynamic import.
 For example, a server can eagerly push resources via HTTP/2 to the client, and they can be loaded via lazy-eval import rather
-than via dynamic import, as the cost for the load would be lower and the trade off may be worth it.
+than via dynamic import, as the cost for the load would be lower and the tradeoff may be worth it.
 
 ### JS Applications
 
 For JavaScript that runs locally and outside of a browser context, the story is a bit different. In
 the case of server side applications, having a slow start may not have a significant impact. On the
-other hand, for tools on the CLI, or startup sensitive applits, it is a rather significant issue.
+other hand, for tools on the CLI, or startup sensitive applets, it is a rather significant issue.
 
 As a result, there has been some inertia in moving away from requireJS due to the performance impact.
 Loading sync with require is by default, so the following is possible:
@@ -325,7 +325,7 @@ This is only possible due to an exposed function, `ChromeUtils.import` which all
 synchronously load the file.
 
 Speaking to the Firefox case specifically, it was reported on DevTools that our most significant cost was
-the full parsing and evaluation of the modules. At present, our custom solution excludes the ability
+the full parsing and evaluation of the modules. At present, our custom solution precludes the ability
 to use certain tooling, such as typescript, to validate our code and also restricts the
 optimizations that we can perform. In an ideal world, we would transition all of our frontend code
 to ES modules, rather than implementing a custom solution.
@@ -334,7 +334,7 @@ to ES modules, rather than implementing a custom solution.
 
 ### Top Level Await
 
-Top Level Await introdues a wrench into the works. If we delay evaluation until a module is used,
+Top Level Await introduces a wrench into the works. If we delay evaluation until a module is used,
 then we may have a module with top level await evaluated in the context of sync code, for example:
 
 ```js
@@ -371,7 +371,7 @@ import { item } from "./file" assert { sync: true } with { lazyInit: true }
 
 Another solution here, would be to eagerly evaluate any async modules, while leaving the rest of the
 lazy graph, lazy. The lazy graph will in any case have some already-evaluated nodes, as other parts
-off the module graph may share a resource with it.
+of the module graph may share a resource with it.
 
 ### Impact on web related code
 
@@ -448,4 +448,4 @@ function Foo() {
 ```
 
 However, this solution doesn't cover deferring the loading of submodules of a lazy graph, and would
-not acheive the characteristics we are looking for.
+not achieve the characteristics we are looking for.
